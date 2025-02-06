@@ -287,6 +287,8 @@ bool Adrastea_Init(Adrastea_Pins_t *pinoutP, uint32_t baudrate,
     if (!ATDevice_Test()) {
         Adrastea_Transmit("map\r\n", 5);
         while (Adrastea_CheckATMode() == false) {
+            delay(3000);
+            WE_DEBUG_PRINT("checkup mode false\r\n");
         }
     } else {
         Adrastea_ATMode = true;
@@ -333,27 +335,38 @@ bool Adrastea_Deinit(void) {
  */
 bool Adrastea_PinWakeUp(void) {
     Adrastea_wakingUp = true;
+    WE_DEBUG_PRINT("Set Pin high\r\n");
     if (!WE_SetPin(Adrastea_pinsP->Adrastea_Pin_WakeUp, WE_Pin_Level_High)) {
+        WE_DEBUG_PRINT("Set Pin high failed\r\n");
         return false;
     }
 
     WE_Delay(100);
 
+    WE_DEBUG_PRINT("Set Pin low\r\n");
     if (!WE_SetPin(Adrastea_pinsP->Adrastea_Pin_WakeUp, WE_Pin_Level_Low)) {
+        WE_DEBUG_PRINT("Set Pin low failed\r\n");
         return false;
     }
+
+    WE_DEBUG_PRINT("send request sleep disabled\r\n");
 
     if (!Adrastea_SendRequest("sleepSet disable\r\n")) {
+        WE_DEBUG_PRINT("send request sleep disabled failed\r\n");
         return false;
     }
 
+    WE_DEBUG_PRINT("wait for confirmation\r\n");
     if (!Adrastea_WaitForConfirm(Adrastea_GetTimeout(Adrastea_Timeout_Power),
                                  Adrastea_CNFStatus_Success, NULL)) {
+        WE_DEBUG_PRINT("wait for confirmation failed\r\n");
         return false;
     }
 
+    WE_DEBUG_PRINT("transmit map\r\n");
     Adrastea_Transmit("map\r\n", 5);
     Adrastea_wakingUp = false;
+    WE_DEBUG_PRINT("transmit map done\r\n");
     return true;
 }
 

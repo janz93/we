@@ -46,7 +46,9 @@ static const char
  * @return true if successful, false otherwise
  */
 bool ATDevice_Test() {
+    WE_DEBUG_PRINT("ATDevice_Test\r\n");
     if (!Adrastea_SendRequest("AT\r\n")) {
+        WE_DEBUG_PRINT("at test return false\r\n");
         return false;
     }
 
