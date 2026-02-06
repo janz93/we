@@ -15,6 +15,10 @@
 #define MQTT_SERVER_ADDRESS "test.mosquitto.org"
 #define MQTT_TOPIC "adrtopic/ad506fbe-b5e3-4bba-a75a-73f864309c5c"
 
+/* APN Settings */
+#define APN_NAME "iot.1nce.net"
+#define PDP_CONTEXT_ID 1
+
 /* State Machine States */
 typedef enum {
     STATE_WAIT_FOR_NETWORK,
@@ -83,6 +87,17 @@ void setup() {
         return;
     }
 
+    // Configure PDP Context with APN
+    ATPacketDomain_PDP_Context_t pdpContext;
+    pdpContext.cid = PDP_CONTEXT_ID;
+    pdpContext.pdpType = ATPacketDomain_PDP_Type_IPv4;
+    strcpy((char*)pdpContext.apnName, APN_NAME);
+
+    if (!ATPacketDomain_DefinePDPContext(pdpContext)) {
+        logError("Failed to define PDP context with APN");
+        return;
+    }
+
     WE_DEBUG_PRINT("Initialization complete\r\n");
     currentState = STATE_WAIT_FOR_NETWORK;
 }
@@ -131,6 +146,19 @@ void handleNetworkRegistration() {
     if (networkStatus.state ==
         ATPacketDomain_Network_Registration_State_Registered_Roaming) {
         WE_DEBUG_PRINT("Network registered\r\n");
+
+        // Activate PDP Context
+        ATPacketDomain_PDP_Context_CID_State_t cidState;
+        cidState.cid = PDP_CONTEXT_ID;
+        cidState.state = ATPacketDomain_PDP_Context_State_Activated;
+
+        if (!ATPacketDomain_SetPDPContextState(cidState)) {
+            logError("Failed to activate PDP context");
+            currentState = STATE_ERROR;
+            return;
+        }
+
+        WE_DEBUG_PRINT("PDP context activated\r\n");
         currentState = STATE_MQTT_CONNECT;
     }
 }
