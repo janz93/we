@@ -143,9 +143,18 @@ void handleNetworkRegistration() {
         return;
     }
 
-    if (networkStatus.state ==
-        ATPacketDomain_Network_Registration_State_Registered_Roaming) {
+    // Check for both home network and roaming states
+    if (networkStatus.state == ATPacketDomain_Network_Registration_State_Registered_Home_Network ||
+        networkStatus.state == ATPacketDomain_Network_Registration_State_Registered_Roaming) {
         WE_DEBUG_PRINT("Network registered\r\n");
+        delay(1000);  // Give network time to stabilize before PDP activation
+
+        // Check current PDP context state first
+        if (!ATPacketDomain_ReadPDPContextsState()) {
+            WE_DEBUG_PRINT("Warning: Could not read PDP context state, attempting activation anyway\r\n");
+        }
+
+        delay(500);  // Additional delay to ensure state is read
 
         // Activate PDP Context
         ATPacketDomain_PDP_Context_CID_State_t cidState;
@@ -159,6 +168,7 @@ void handleNetworkRegistration() {
         }
 
         WE_DEBUG_PRINT("PDP context activated\r\n");
+        delay(2000);  // Wait for PDP context to fully activate
         currentState = STATE_MQTT_CONNECT;
     }
 }
