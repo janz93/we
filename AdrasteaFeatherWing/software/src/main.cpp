@@ -147,27 +147,11 @@ void handleNetworkRegistration() {
     if (networkStatus.state == ATPacketDomain_Network_Registration_State_Registered_Home_Network ||
         networkStatus.state == ATPacketDomain_Network_Registration_State_Registered_Roaming) {
         WE_DEBUG_PRINT("Network registered\r\n");
-        delay(1000);  // Give network time to stabilize before PDP activation
+        delay(1000);  // Give network time to stabilize
 
-        // Check current PDP context state first
-        if (!ATPacketDomain_ReadPDPContextsState()) {
-            WE_DEBUG_PRINT("Warning: Could not read PDP context state, attempting activation anyway\r\n");
-        }
-
-        delay(500);  // Additional delay to ensure state is read
-
-        // Activate PDP Context
-        ATPacketDomain_PDP_Context_CID_State_t cidState;
-        cidState.cid = PDP_CONTEXT_ID;
-        cidState.state = ATPacketDomain_PDP_Context_State_Activated;
-
-        if (!ATPacketDomain_SetPDPContextState(cidState)) {
-            logError("Failed to activate PDP context");
-            currentState = STATE_ERROR;
-            return;
-        }
-
-        WE_DEBUG_PRINT("PDP context activated\r\n");
+        // Note: PDP context auto-activates on Adrastea module after network registration
+        // No manual activation needed
+        WE_DEBUG_PRINT("PDP context should be auto-activated\r\n");
         delay(2000);  // Wait for PDP context to fully activate
         currentState = STATE_MQTT_CONNECT;
     }
